@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@kgkn42">
+    <meta name="twitter:title" content="アンガーシュレッダー">
+    <meta name="twitter:description" content="ムカついた事を書いて破ってスッキリ！怒りを破壊しよう！">
+    <meta name="twitter:image" content="https://kagekin.github.io/anger-shredder/img/samune.png">
+    <link rel="icon" href="favicon.png">
     <title>アンガーシュレッダー</title>
     <style>
         /* CSS (デザイン) */
@@ -653,7 +659,7 @@
 
                 setTimeout(() => {
                     shredderSound.currentTime = 0;
-                    shredderSound.play().catch(e => console.error("裁断音の再生に失敗:", e));
+                    shredderSound.play().catch(e => console.error("裁断音の再生に失敗しました:", e));
 
                     noteToShred.classList.add('shredding');
                     stripsContainer.classList.add('shredding');
@@ -667,7 +673,7 @@
                         appContainer.classList.remove('shaking');
 
                         celebrationSound.currentTime = 0;
-                        celebrationSound.play().catch(e => console.error("祝賀BGMの再生に失敗:", e));
+                        celebrationSound.play().catch(e => console.error("完了BGMの再生に失敗しました:", e));
                     }, 9100);
 
                 }, 100);
@@ -687,7 +693,7 @@
                 stopAllSounds();
             });
 
-            const shareText = "ムカついた事を書いて破ってスッキリ！ 「アンガーシュレッダー」で怒りを破壊しました。 #アンガーシュレッダー";
+            const shareText = "頭に来たことを「紙に書いてシュレッダーすると」怒りがキレイに消える！ 怒り裁断Webアプリ 「アンガーシュレッダー」で怒りを破壊しました。 #アンガーシュレッダー #カゲキン";
             const shareUrl = "";
             const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
             shareButton.href = twitterUrl;
