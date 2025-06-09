@@ -1,0 +1,697 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アンガーシュレッダー</title>
+    <style>
+        /* CSS (デザイン) */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+
+        :root {
+            --paper-bg: #fffbe0;
+            --primary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --background-color: #ecf0f1;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: var(--background-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        #shred-background-effect {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-color: #111;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+            #shred-background-effect.active {
+                opacity: 1;
+            }
+
+            #shred-background-effect::before,
+            #shred-background-effect::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(0deg, rgba(0, 255, 0, 0.3) 0%, rgba(255, 0, 255, 0.4) 33%, rgba(255, 0, 102, 0.3) 66%, rgba(0, 255, 0, 0.4) 100% );
+                background-size: 100% 400%;
+                animation: cyber-scroll 0.8s linear infinite, glitch-clip 1s steps(2, end) infinite;
+            }
+
+            #shred-background-effect::after {
+                background: linear-gradient(90deg, rgba(0, 255, 0, 0.3) 0%, rgba(170, 0, 255, 0.4) 50%, rgba(0, 255, 0, 0.3) 100% );
+                background-size: 400% 100%;
+                animation: cyber-scroll-rev 0.8s linear infinite, glitch-clip-rev 1s steps(2, end) infinite;
+                animation-direction: reverse;
+            }
+
+        @keyframes cyber-scroll {
+            to {
+                background-position: 0 400%;
+            }
+        }
+
+        @keyframes cyber-scroll-rev {
+            to {
+                background-position: 400% 0;
+            }
+        }
+
+        @keyframes glitch-clip {
+            0%, 40%, 60%, 100% {
+                clip-path: inset(0 0 0 0);
+            }
+
+            20% {
+                clip-path: inset(40% 0 20% 0);
+            }
+
+            80% {
+                clip-path: inset(80% 0 5% 0);
+            }
+        }
+
+        @keyframes glitch-clip-rev {
+            0%, 40%, 60%, 100% {
+                clip-path: inset(0 0 0 0);
+            }
+
+            20% {
+                clip-path: inset(10% 0 70% 0);
+            }
+
+            80% {
+                clip-path: inset(60% 0 15% 0);
+            }
+        }
+
+        #app-container {
+            background-color: #ffffff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            transition: all 0.5s ease;
+            position: relative;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+            #app-container.shaking {
+                animation: screen-shake 0.1s linear infinite;
+            }
+
+        @keyframes screen-shake {
+            0%, 100% {
+                transform: translate(0, 0) rotate(0);
+            }
+
+            25% {
+                transform: translate(4px, -3px) rotate(0.5deg);
+            }
+
+            50% {
+                transform: translate(-2px, 2px) rotate(-0.5deg);
+            }
+
+            75% {
+                transform: translate(3px, 3px) rotate(0.2deg);
+            }
+        }
+
+        #input-area, #result-area {
+            position: relative;
+            z-index: 2;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-top: 0;
+            font-size: 2em;
+        }
+
+        p {
+            color: #7f8c8d;
+            line-height: 1.7;
+        }
+
+        #pulsating-anger {
+            font-size: 3em;
+            animation: pulsate 1.5s ease-in-out infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes pulsate {
+            0%, 100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+        }
+
+        #anger-note-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        #anger-note, #note-to-shred {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 16px;
+            line-height: 1.6;
+            box-sizing: border-box;
+            background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px);
+            background-size: 100% 1.6em;
+            background-color: var(--paper-bg);
+            font-family: inherit;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        #anger-note {
+            resize: vertical;
+        }
+
+        #note-to-shred {
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin: 0;
+            visibility: hidden;
+            transition: transform 9s ease-in, clip-path 9s ease-in;
+            clip-path: inset(0 0 0 0);
+        }
+
+            #note-to-shred.shredding {
+                visibility: visible;
+                transform: translateY(0);
+                clip-path: inset(0 0 100% 0);
+            }
+
+        #shredder-machine {
+            position: relative;
+            height: 40px; /* シュレッダーの高さ分 */
+            margin-top: -20px; /* メモ帳に少し重ねる */
+        }
+
+        #shredder-wrapper {
+            width: 100%;
+            height: 40px;
+            background: linear-gradient(45deg, #34495e, #7f8c8d, #34495e);
+            border-radius: 5px 5px 0 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        #paper-container {
+            width: 100%;
+            height: 100px; /* 排出される紙の表示エリア */
+            position: absolute;
+            top: 40px;
+            left: 0; /* シュレッダーの下 */
+            overflow: hidden;
+            z-index: 5;
+        }
+
+        .paper-strips {
+            position: absolute;
+            top: -100px; /* 排出エリアの上に隠す */
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            background-color: var(--paper-bg);
+            transition: transform 9s ease-out;
+        }
+
+            .paper-strips.shredding {
+                transform: translateY(100px);
+            }
+
+        .strip {
+            flex-grow: 1;
+            max-width: 8px;
+            height: 100%;
+            background-color: var(--paper-bg);
+            box-shadow: 1px 0 0 #ddd;
+        }
+
+            .strip:nth-child(2n) {
+                transform: translateY(5px);
+            }
+
+            .strip:nth-child(3n) {
+                transform: translateY(-3px);
+            }
+
+        #button-area {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        #shred-button, #random-anger-button {
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        #shred-button {
+            background-color: var(--accent-color);
+        }
+
+            #shred-button:hover {
+                background-color: #c0392b;
+            }
+
+            #shred-button:disabled {
+                background-color: #bdc3c7;
+                cursor: not-allowed;
+            }
+
+        #random-anger-button {
+            background-color: #3498db;
+        }
+
+            #random-anger-button:hover {
+                background-color: #2980b9;
+            }
+
+        #shredding-status {
+            font-weight: bold;
+            color: #fff;
+            margin: 20px 0;
+            animation: blink 1.5s linear infinite;
+            text-shadow: 0 0 5px #fff;
+            position: relative;
+            z-index: 11;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        #result-area {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            padding: 20px;
+            position: relative;
+        }
+
+            #result-area.visible {
+                display: block;
+                opacity: 1;
+                background: linear-gradient(45deg, #ff00ff, #00ffff, #ffff00, #ff00ff);
+                background-size: 400% 400%;
+                animation: party-bg 5s ease infinite;
+            }
+
+        @keyframes party-bg {
+            0% {
+                background-position: 0% 50%
+            }
+
+            50% {
+                background-position: 100% 50%
+            }
+
+            100% {
+                background-position: 0% 50%
+            }
+        }
+
+        #result-message {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #result-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .result-btn {
+            display: inline-block;
+            background-color: rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            border: 1px solid #fff;
+            font-family: inherit;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .result-btn:hover {
+                background-color: rgba(255,255,255,0.4);
+            }
+
+        .scissor {
+            position: absolute;
+            font-size: 2em;
+            animation: fly-across 5s linear infinite;
+            z-index: 1; /* 背景エフェクト内で動かすため */
+        }
+
+        @keyframes fly-across {
+            from {
+                transform: translateX(-10vw) rotate(0deg);
+            }
+
+            to {
+                transform: translateX(110vw) rotate(720deg);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #doctor-container {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            align-items: flex-end;
+            z-index: 100;
+        }
+
+        #doctor-bubble {
+            background-color: #fff;
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            position: relative;
+            margin-right: 10px;
+            max-width: 180px;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+
+            #doctor-bubble::after {
+                content: '';
+                position: absolute;
+                bottom: 10px;
+                right: -10px;
+                border: 5px solid transparent;
+                border-left-color: #fff;
+            }
+
+        #doctor-image {
+            width: 80px;
+            height: 80px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+            #doctor-image img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #7f8c8d;
+            z-index: 10;
+        }
+
+            footer p {
+                margin: 5px 0;
+            }
+
+            footer a {
+                color: #3498db;
+                text-decoration: none;
+            }
+
+                footer a:hover {
+                    text-decoration: underline;
+                }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            #app-container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            #doctor-container {
+                bottom: 10px;
+                right: 5px;
+            }
+
+            #doctor-image {
+                width: 60px;
+                height: 60px;
+            }
+
+            #doctor-bubble {
+                font-size: 12px;
+                padding: 8px 12px;
+                max-width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="shred-background-effect">
+        <div id="scissors-container"></div>
+    </div>
+
+    <div id="app-container">
+        <div id="input-area">
+            <div id="pulsating-anger">💢</div>
+            <h1>アンガーシュレッダー</h1>
+            <p>頭に来たこと、イライラした内容を書き出して、シュレッダーにかけて破壊しましょう。</p>
+            <div id="anger-note-container">
+                <textarea id="anger-note" placeholder="ここに怒りの内容を書き込んでください…"></textarea>
+                <div id="note-to-shred"></div>
+            </div>
+            <div id="shredder-machine" class="hidden">
+                <div id="shredder-wrapper"></div>
+                <div id="paper-container"></div>
+            </div>
+            <div id="button-area">
+                <button id="random-anger-button">ランダム怒りメモ生成</button>
+                <button id="shred-button" disabled>シュレッダーにかける</button>
+            </div>
+            <p id="shredding-status" class="hidden">怒り裁断中...</p>
+        </div>
+
+        <div id="result-area">
+            <p id="result-message">怒り裁断完了！<br>あなたの怒りは粉々に破壊されました</p>
+            <div id="result-buttons">
+                <a href="#" id="share-button" class="result-btn" target="_blank" rel="noopener noreferrer">Xでアンガーシュレッダーをシェアする</a>
+                <button id="reset-button" class="result-btn">もう一回シュレッダーする</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="doctor-container">
+        <div id="doctor-bubble"></div>
+        <div id="doctor-image">
+            <img src="img/kagekinicon.png" alt="カゲキン博士">
+        </div>
+    </div>
+
+    <footer>
+        <p>参考研究: <a href="https://www.u-presscenter.jp/article/post-53159.html" target="_blank" rel="noopener noreferrer">【名古屋大学】紙とともに去りぬ　～怒りを「書いて捨てる」と気持ちが鎮まることを実証～</a></p>
+        <p>制作者: <a href="https://x.com/kgkn42" target="_blank" rel="noopener noreferrer">カゲキン博士がGeminiと一緒に作りました！</a></p>
+    </footer>
+
+    <audio id="shredder-sound" src="audio/paper-shredder-42411.mp3" preload="auto"></audio>
+    <audio id="celebration-sound" src="audio/ASSONG.mp3" preload="auto"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const appContainer = document.getElementById('app-container');
+            const backgroundEffect = document.getElementById('shred-background-effect');
+            const angerNote = document.getElementById('anger-note');
+            const noteToShred = document.getElementById('note-to-shred');
+            const shredButton = document.getElementById('shred-button');
+            const randomAngerButton = document.getElementById('random-anger-button');
+            const buttonArea = document.getElementById('button-area');
+            const inputArea = document.getElementById('input-area');
+            const resultArea = document.getElementById('result-area');
+            const shareButton = document.getElementById('share-button');
+            const resetButton = document.getElementById('reset-button');
+            const shredderSound = document.getElementById('shredder-sound');
+            const celebrationSound = document.getElementById('celebration-sound');
+            const shredderMachine = document.getElementById('shredder-machine');
+            const paperContainer = document.getElementById('paper-container');
+            const shreddingStatus = document.getElementById('shredding-status');
+            const scissorsContainer = document.getElementById('scissors-container');
+            const doctorBubble = document.getElementById('doctor-bubble');
+
+            const angerTemplates = [
+                "💢 コンビニでレジ並んでたら、後ろから「こっち早いですよ」って言って別の列に誘導された。結局そっちはもっと遅くて、レジ打ちもめちゃくちゃ遅くてイライラした。黙って並んでればよかった。",
+                "💢 上司がまた「そんなつもりじゃなかった」って言い訳した。じゃあ私は何度も同じことで怒られてるんですけど、それって誰のつもりなんですか？ 無責任にもほどがある。",
+                "💢 電車のドアが閉まる直前に駆け込んできた人のせいで、カバンが挟まって汚れた。しかもその人、謝りもしないでスマホいじってる。マジでありえない。",
+                "💢 楽しみにしていた限定スイーツを買いに行ったら、目の前で売り切れた。昨日からずっと楽しみにしていたのに…。絶望感が半端ない。",
+                "💢 会議で「何か質問はありますか？」って聞かれたから勇気を出して質問したら、「それは後で個人的に聞いて」って言われた。じゃあなんで今聞いたんだよ！",
+                "💢 友達に貸した本が、コーヒーのシミだらけになって返ってきた。「ごめん、ちょっとこぼしちゃって」じゃないんだよ。もう絶版で手に入らない本なのに！",
+                "💢 エレベーターの「開」ボタンを押してるのに、閉まるまで待たずに猛ダッシュしてくる人。こっちは親切で待ってるのに、なんでそんなに急かすの？",
+                "💢 PCのアップデートが勝手に始まって、1時間以上作業が止まった。締め切り直前だったのに、全ての計画が台無し。頼むからタイミングを考えてくれ。",
+                "💢 オンラインで買った服、写真と色が全然違う。もはや別物レベル。返品手続きも面倒くさいし、本当にがっかり。",
+                "💢 何度も「結構です」って言ってるのに、しつこく勧誘の電話をかけてくる。人の話を聞く気がないなら電話してくるな。時間の無駄。"
+            ];
+
+            const doctorLines = [
+                "ようこそ、怒り収集実験へ。\nユーの怒り、研究材料にさせてもらうよ。",
+                "感情って裂けるんだ！さあ、書いて捨てて怒りバイバイ！ニャー！",
+                "怒りは重いだろう？\n全部シュレッダーしてミーに任せたまえ。",
+                "これより裁断の儀を始める。\n怒りを記し、物質に変換せよ…ニャー！",
+                "被験体YO、感情廃棄実験スタートだ。書け、捨てろ、軽くなれ！",
+                "フム、怒っているようだね。\n書いてシュレッダーしてサヨナラだ。",
+                "我が名はカゲキン博士！\nユーの怒り、ビリビリにしてやろう！私の趣味だよ。"
+            ];
+
+            // ランダムなセリフを設定
+            doctorBubble.innerText = doctorLines[Math.floor(Math.random() * doctorLines.length)];
+
+            angerNote.addEventListener('input', () => {
+                shredButton.disabled = angerNote.value.trim() === '';
+            });
+
+            randomAngerButton.addEventListener('click', () => {
+                const randomIndex = Math.floor(Math.random() * angerTemplates.length);
+                angerNote.value = angerTemplates[randomIndex];
+                shredButton.disabled = false;
+            });
+
+            function startScissors() {
+                scissorsContainer.innerHTML = '';
+                for (let i = 0; i < 20; i++) {
+                    const scissor = document.createElement('div');
+                    scissor.className = 'scissor';
+                    scissor.innerText = '✂️';
+                    scissor.style.top = Math.random() * 100 + 'vh';
+                    scissor.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                    scissor.style.animationDelay = Math.random() * 5 + 's';
+                    scissorsContainer.appendChild(scissor);
+                }
+            }
+
+            shredButton.addEventListener('click', () => {
+                if (angerNote.value.trim() === '') return;
+
+                backgroundEffect.classList.add('active');
+                appContainer.classList.add('shaking');
+                buttonArea.classList.add('hidden');
+                shreddingStatus.classList.remove('hidden');
+                startScissors();
+
+                noteToShred.innerText = angerNote.value;
+                angerNote.style.transition = 'opacity 0.5s';
+                angerNote.style.opacity = '0';
+
+                shredderMachine.classList.remove('hidden');
+
+                paperContainer.innerHTML = '';
+                const stripsContainer = document.createElement('div');
+                stripsContainer.className = 'paper-strips';
+                const stripCount = 40;
+                for (let i = 0; i < stripCount; i++) {
+                    const strip = document.createElement('div');
+                    strip.className = 'strip';
+                    stripsContainer.appendChild(strip);
+                }
+                paperContainer.appendChild(stripsContainer);
+
+                setTimeout(() => {
+                    shredderSound.currentTime = 0;
+                    shredderSound.play().catch(e => console.error("裁断音の再生に失敗:", e));
+
+                    noteToShred.classList.add('shredding');
+                    stripsContainer.classList.add('shredding');
+
+                    setTimeout(() => {
+                        shredderSound.pause();
+                        inputArea.classList.add('hidden');
+                        resultArea.classList.add('visible');
+                        backgroundEffect.classList.remove('active');
+                        scissorsContainer.innerHTML = ''; // ハサミを消去
+                        appContainer.classList.remove('shaking');
+
+                        celebrationSound.currentTime = 0;
+                        celebrationSound.play().catch(e => console.error("祝賀BGMの再生に失敗:", e));
+                    }, 9100);
+
+                }, 100);
+            });
+
+            function stopAllSounds() {
+                shredderSound.pause();
+                celebrationSound.pause();
+            }
+
+            resetButton.addEventListener('click', () => {
+                stopAllSounds();
+                location.reload();
+            });
+
+            shareButton.addEventListener('click', (e) => {
+                stopAllSounds();
+            });
+
+            const shareText = "ムカついた事を書いて破ってスッキリ！ 「アンガーシュレッダー」で怒りを破壊しました。 #アンガーシュレッダー";
+            const shareUrl = "";
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+            shareButton.href = twitterUrl;
+        });
+    </script>
+</body>
+</html>
